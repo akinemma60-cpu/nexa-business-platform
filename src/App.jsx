@@ -22,11 +22,11 @@ const navItems = [
 ];
 
 function App() {
-  const { user, loading, configured } = useAuth();
+  const { user, loading, authError, configured } = useAuth();
   const location = useLocation();
   if (!configured) return <ConfigurationNotice />;
   if (loading) return <main className="auth-screen"><div className="auth-loading"><LoaderCircle className="spin" size={26} /><span>Restoring your secure session…</span></div></main>;
-  if (!user) return <Routes><Route path="/login" element={<Login />} /><Route path="*" element={<Navigate to="/login" replace state={{ from: location }} />} /></Routes>;
+  if (!user) return <Routes><Route path="/login" element={<Login sessionError={authError} />} /><Route path="*" element={<Navigate to="/login" replace state={{ from: location }} />} /></Routes>;
   return <WorkspaceApp user={user} />;
 }
 
