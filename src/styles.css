@@ -21,3 +21,10 @@ html.theme-dark{--canvas:#14151c;--surface:#1c1d26;--surface-2:#22232d;--line:#3
 .status-pill.out-of-stock{color:#b9504b;background:#fff0ef}.dark .status-pill.out-of-stock{color:#f0a29b;background:#3b282a}
 .dark .inline-error,.dark .global-error,.dark .order-data-error{color:#f0aaa4;background:#382629;border-color:#59383b}.dark .status-pill.completed,.dark .status-pill.in-stock{color:#7ad0b5;background:#203832}.dark .status-pill.processing{color:#edc178;background:#3b3122}.dark .status-pill.pending{color:#b2c0d4;background:#2a3039}.dark .status-pill.low-stock{color:#f0aa86;background:#3c2d27}.dark .alert-count{color:#f0aa86;background:#3c2d27}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+.auth-switch-primary{margin-top:16px;font-size:12px}
+.auth-switch-primary a{color:var(--purple);font-weight:700;text-decoration:none;padding:2px 1px}
+.auth-switch-primary a:hover{text-decoration:underline}
+.auth-switch-primary a:focus-visible,.sidebar-signout:focus-visible{outline:2px solid var(--purple);outline-offset:2px}
+.sidebar-signout{height:31px;padding:0 9px;gap:5px;font-size:10px;flex:none}
+.profile-copy{min-width:0}
+.profile-copy strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

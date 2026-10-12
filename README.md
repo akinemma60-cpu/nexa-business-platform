@@ -16,8 +16,14 @@ React + Vite business dashboard backed by Supabase Auth and Postgres. The browse
 
    Restart the Vite server after editing environment variables. `.env.local` is ignored by Git.
 3. In Supabase **SQL Editor**, run [`supabase/migrations/20261002000000_nexa_schema.sql`](supabase/migrations/20261002000000_nexa_schema.sql) once. It creates products, customers, orders, and order_items, the foreign keys, stock triggers, the atomic `create_order` RPC, grants, and owner-only RLS policies.
-4. In **Authentication → Providers**, enable **Email** sign-in and allow sign-ups. Keep email confirmation enabled. Under **Authentication → URL Configuration**, set the **Site URL** to the production NEXA origin and add that exact origin (for example, `https://your-nexa-site.netlify.app`) to **Redirect URLs**. Local signup without `VITE_SITE_URL` uses Supabase's Site URL rather than redirecting to localhost. Set `VITE_SITE_URL` in the deployment environment only if you need to override the automatic production origin. Add localhost to Supabase Redirect URLs only when explicitly setting `VITE_SITE_URL=http://localhost:5173` to test confirmations locally. Users must follow the confirmation email link before signing in.
-5. Run `npm run dev`, create an account, and sign in. The first account receives access to its own workspace; every account is isolated by the existing owner-only RLS policies.
+4. In **Authentication → Providers**, enable **Email** sign-in, allow sign-ups, and keep email confirmation enabled. In **Authentication → URL Configuration**:
+   - Set **Site URL** to your production Netlify origin, with no path (for example, `https://your-nexa-site.netlify.app`).
+   - Add the exact confirmation callback `https://your-nexa-site.netlify.app/login` to **Redirect URLs**. Replace the example host with the site's actual Netlify domain; add the corresponding `/login` URL for any production custom domain you use.
+   - In Netlify's environment variables, set `VITE_SITE_URL` to that same production origin. The app appends `/login`, so confirmation returns to the sign-in screen. If `VITE_SITE_URL` is unset in a deployed build, the app uses the current site origin instead.
+   - For local confirmation testing, set `VITE_SITE_URL=http://localhost:5173` and add `http://localhost:5173/login` to **Redirect URLs**. Without that override, local confirmation uses the Supabase **Site URL**.
+
+   Supabase's confirmation email must use its normal confirmation URL (the default `{{ .ConfirmationURL }}` template); the app processes the returned auth session and presents the login page when the user is not signed in. Confirmations must be completed before password sign-in.
+5. Run `npm run dev`, open `/signup` (or choose **Create account** on the login screen), and complete email confirmation before signing in. The first account receives access to its own workspace; every account is isolated by the existing owner-only RLS policies.
 
 If a user has already registered but did not receive (or can no longer find) the confirmation email, they can enter the same address on the sign-in screen and choose **Resend confirmation email**.
 
