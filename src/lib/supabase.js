@@ -1,11 +1,16 @@
 import { createClient } from "@supabase/supabase-js";
+import { getSupabaseConfig } from "./supabaseConfig.js";
 
-const url = import.meta.env.VITE_SUPABASE_URL?.trim();
-const anonKey = (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY)?.trim();
+const config = getSupabaseConfig({
+  url: import.meta.env.VITE_SUPABASE_URL,
+  publishableKey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+  anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+});
 
-export const isSupabaseConfigured = Boolean(url && anonKey);
+export const isSupabaseConfigured = config.configured;
+export const supabaseConfigIssue = config.reason;
 export const supabase = isSupabaseConfigured
-  ? createClient(url, anonKey, {
+  ? createClient(config.url, config.key, {
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
     })
   : null;

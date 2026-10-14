@@ -4,6 +4,7 @@ import { LayoutDashboard, Package, Users, ShoppingCart, BarChart3, Settings, Sea
 import { useAuth } from "./auth/AuthContext";
 import { supabase } from "./lib/supabase";
 import Login from "./auth/Login";
+import AuthRecovery from "./auth/AuthRecovery";
 import { useBusinessData } from "./data/BusinessDataContext";
 
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -22,16 +23,25 @@ const navItems = [
 ];
 
 function App() {
-  const { user, loading, authError, configured } = useAuth();
+  const { user, loading, authError, passwordRecovery, emailConfirmationComplete, configured, configIssue } = useAuth();
   const location = useLocation();
-  if (!configured) return <ConfigurationNotice />;
+  if (!configured) return <ConfigurationNotice issue={configIssue} />;
   if (loading) return <main className="auth-screen"><div className="auth-loading"><LoaderCircle className="spin" size={26} /><span>Restoring your secure session…</span></div></main>;
+  if (emailConfirmationComplete) return <Login sessionError={authError} confirmationSuccess />;
+  if (passwordRecovery) return <AuthRecovery />;
   if (!user) return <Routes><Route path="/login" element={<Login sessionError={authError} />} /><Route path="/signup" element={<Login initialMode="signup" sessionError={authError} />} /><Route path="*" element={<Navigate to="/login" replace state={{ from: location }} />} /></Routes>;
   return <WorkspaceApp user={user} />;
 }
 
-function ConfigurationNotice() {
-  return <main className="auth-screen"><section className="auth-card setup-card"><div className="brand auth-brand"><div className="brand-mark"><span /></div><span className="brand-name">nexa<span>.</span></span></div><p className="eyebrow">SUPABASE CONNECTION</p><h1>Connect your workspace</h1><p className="auth-subtitle">Add your Supabase project URL and publishable key to a <code>.env.local</code> file in the project root, then restart Vite.</p><pre>VITE_SUPABASE_URL=https://your-project.supabase.co<br />VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...</pre><p className="auth-footnote">Use only the public publishable key (or legacy anon key) here. Never add a service role or secret key to a browser app.</p></section></main>;
+function ConfigurationNotice({ issue }) {
+  const detail = issue === "missing-url"
+    ? "Set VITE_SUPABASE_URL to your Supabase project URL."
+    : issue === "missing-key"
+      ? "Set VITE_SUPABASE_PUBLISHABLE_KEY to the public publishable key. VITE_SUPABASE_ANON_KEY is also supported for existing projects."
+      : issue === "invalid-url"
+        ? "VITE_SUPABASE_URL must be an absolute HTTP or HTTPS project URL."
+        : "Set both the Supabase project URL and a public API key.";
+  return <main className="auth-screen"><section className="auth-card setup-card"><div className="brand auth-brand"><div className="brand-mark"><span /></div><span className="brand-name">nexa<span>.</span></span></div><p className="eyebrow">SUPABASE CONNECTION</p><h1>Connect your workspace</h1><p className="auth-subtitle">{detail}</p><p className="auth-subtitle">For local development, set these variables in <code>.env.local</code> and restart Vite. For Netlify, set them in the site’s environment variables and trigger a new build and deployment.</p><pre>VITE_SUPABASE_URL=https://your-project.supabase.co<br />VITE_SUPABASE_PUBLISHABLE_KEY=your-public-publishable-key</pre><p className="auth-footnote">Use only a public publishable key or legacy anon key. Never put a service-role or secret key in frontend variables.</p></section></main>;
 }
 
 function WorkspaceApp({ user }) {
