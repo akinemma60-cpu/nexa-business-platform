@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Edit2, Plus, Search, Trash2, X, Package, Boxes, CircleDollarSign, LoaderCircle } from "lucide-react";
 import { api } from "../lib/api";
 import { useBusinessData } from "../data/BusinessDataContext";
-import { money, PageHeading, StatusPill } from "../components";
+import { getPreferredCurrency, money, PageHeading, StatusPill } from "../components";
 
 const blankProduct = { name: "", category: "Electronics", price: "", stock: "" };
 export default function Products() {
@@ -19,8 +19,12 @@ export default function Products() {
   const categories = ["All categories", ...new Set(products.map((product) => product.category))];
   const openForm = (product = null) => { setEditing(product); setForm(product ? { ...product, price: String(product.price), stock: String(product.stock) } : { ...blankProduct }); setError(""); setModalOpen(true); };
   const submit = async (event) => {
-    event.preventDefault(); setBusy(true); setError("");
+    event.preventDefault(); setError("");
     const values = { name: form.name.trim(), category: form.category, price: Number(form.price), stock: Number(form.stock) };
+    if (!values.name) { setError("Enter a product name."); return; }
+    if (!Number.isFinite(values.price) || values.price < 0) { setError("Enter a valid non-negative price."); return; }
+    if (!Number.isInteger(values.stock) || values.stock < 0) { setError("Enter a whole number of stock units."); return; }
+    setBusy(true);
     try { if (editing) await api.products.update(editing.id, values); else await api.products.create(values); await reload(); setModalOpen(false); setNotice(editing ? "Product updated" : "Product added"); window.setTimeout(() => setNotice(""), 2500); }
     catch (cause) { setError(cause.message || "Unable to save this product."); }
     finally { setBusy(false); }
@@ -33,4 +37,4 @@ export default function Products() {
     {notice && <div className="toast">{notice}</div>}{modalOpen && <ProductModal form={form} setForm={setForm} editing={editing} onClose={() => setModalOpen(false)} onSubmit={submit} busy={busy} error={error} />}
   </>;
 }
-function ProductModal({ form, setForm, editing, onClose, onSubmit, busy, error }) { return <div className="modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}><form className="modal-card" onSubmit={onSubmit}><div className="modal-heading"><div><p className="eyebrow">INVENTORY</p><h2>{editing ? "Edit product" : "Add a product"}</h2></div><button type="button" className="icon-button" aria-label="Close" onClick={onClose}><X size={18} /></button></div><label className="form-field">Product name<input required autoFocus value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Wireless headphones" /></label><label className="form-field">Category<select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>{["Electronics", "Accessories", "Office", "Stationery", "Home", "Other"].map((item) => <option key={item}>{item}</option>)}</select></label><div className="form-row"><label className="form-field">Price (NGN)<input type="number" required min="0" step="0.01" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} placeholder="0" /></label><label className="form-field">Stock units<input type="number" required min="0" step="1" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} placeholder="0" /></label></div>{error && <p className="form-error" role="alert">{error}</p>}<div className="modal-actions"><button type="button" className="button button-secondary" onClick={onClose}>Cancel</button><button className="button button-primary" type="submit" disabled={busy}>{busy ? "Saving…" : editing ? "Save changes" : "Add product"}</button></div></form></div>; }
+function ProductModal({ form, setForm, editing, onClose, onSubmit, busy, error }) { const categories = [...new Set(["Electronics", "Accessories", "Office", "Stationery", "Home", "Other", ...(editing ? [editing.category] : [])])]; return <div className="modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}><form className="modal-card" onSubmit={onSubmit}><div className="modal-heading"><div><p className="eyebrow">INVENTORY</p><h2>{editing ? "Edit product" : "Add a product"}</h2></div><button type="button" className="icon-button" aria-label="Close" onClick={onClose}><X size={18} /></button></div><label className="form-field">Product name<input required autoFocus value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Wireless headphones" /></label><label className="form-field">Category<select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>{categories.map((item) => <option key={item}>{item}</option>)}</select></label><div className="form-row"><label className="form-field">Price ({getPreferredCurrency()})<input type="number" required min="0" step="0.01" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} placeholder="0" /></label><label className="form-field">Stock units<input type="number" required min="0" step="1" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} placeholder="0" /></label></div>{error && <p className="form-error" role="alert">{error}</p>}<div className="modal-actions"><button type="button" className="button button-secondary" onClick={onClose}>Cancel</button><button className="button button-primary" type="submit" disabled={busy}>{busy ? "Saving…" : editing ? "Save changes" : "Add product"}</button></div></form></div>; }

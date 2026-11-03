@@ -3,7 +3,7 @@ function nonEmptyString(value) {
 }
 
 export function getSupabaseConfig({ url, publishableKey, anonKey }) {
-  const projectUrl = nonEmptyString(url);
+  const projectUrl = nonEmptyString(url).replace(/\/+$/, "");
   const key = nonEmptyString(publishableKey) || nonEmptyString(anonKey);
 
   if (!projectUrl) return { configured: false, reason: "missing-url" };

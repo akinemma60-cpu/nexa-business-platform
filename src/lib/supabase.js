@@ -11,6 +11,11 @@ export const isSupabaseConfigured = config.configured;
 export const supabaseConfigIssue = config.reason;
 export const supabase = isSupabaseConfigured
   ? createClient(config.url, config.key, {
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        flowType: "pkce",
+      },
     })
   : null;

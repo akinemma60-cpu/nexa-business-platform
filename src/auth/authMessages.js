@@ -43,5 +43,9 @@ export function getAuthErrorMessage(authError) {
   if (/invalid login credentials/i.test(message)) {
     return "Email or password is incorrect. If you have not confirmed your email yet, request a new confirmation email.";
   }
+  if (/failed to fetch|network.*(error|failure)|fetch failed/i.test(`${code} ${message}`)) {
+    return "NEXA could not reach your Supabase project. Check the project URL and publishable key, then confirm the Supabase Auth settings for your site and login redirect.";
+  }
   return message || "Authentication failed. Please try again.";
 }
+

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, LockKeyhole, UserRoundPlus } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "./AuthContext";
 import { getAuthCallbackError, getAuthErrorMessage, getResendCooldownSeconds } from "./authMessages";
@@ -8,6 +8,7 @@ import { requestPasswordReset, resendSignupConfirmation, signInWithEmailPassword
 import { getSignupRedirectTo } from "./signupRedirect";
 
 export default function Login({ initialMode = "login", sessionError = "", confirmationSuccess = false }) {
+  const navigate = useNavigate();
   const { beginSignupAttempt, endSignupAttempt, dismissEmailConfirmationNotice } = useAuth();
   const signingUp = initialMode === "signup";
   const [resettingPassword, setResettingPassword] = useState(false);
@@ -101,11 +102,33 @@ export default function Login({ initialMode = "login", sessionError = "", confir
           setError(signOutError?.message || "Email confirmation is disabled in Supabase. Enable email confirmation before allowing account signup.");
         }
       } else {
-        const { error: signinError } = await signInWithEmailPassword(supabase.auth, email.trim(), password);
-        if (signinError) setError(getAuthErrorMessage(signinError));
+        const { data: signInData, error: signinError } = await signInWithEmailPassword(supabase.auth, email.trim(), password);
+        if (signinError) {
+          setError(getAuthErrorMessage(signinError));
+          return;
+        }
+
+        if (!signInData?.session) {
+          setError("Sign in did not return an active session. Please try again.");
+          return;
+        }
+
+        const { data: currentSession, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) {
+          setError(getAuthErrorMessage(sessionError));
+          return;
+        }
+
+        if (!currentSession?.session) {
+          setError("Your sign-in session could not be restored. Please try again.");
+          return;
+        }
+
+        setSuccess("Signing you in…");
+        navigate("/dashboard", { replace: true });
       }
     } catch (cause) {
-      setError(cause.message || "Unable to reach Supabase. Check your connection and project URL.");
+      setError(getAuthErrorMessage(cause));
     } finally {
       if (signupAttemptStarted) endSignupAttempt();
       setBusy(false);
@@ -138,7 +161,7 @@ export default function Login({ initialMode = "login", sessionError = "", confir
         setSuccess("If this address needs verification, a new confirmation email has been sent. Check your inbox and spam folder, and use the newest message.");
       }
     } catch (cause) {
-      setError(cause.message || "Unable to resend the confirmation email. Check your connection and try again.");
+      setError(getAuthErrorMessage(cause) || "Unable to resend the confirmation email. Check your connection and try again.");
     } finally {
       setBusy(false);
     }
@@ -164,7 +187,7 @@ export default function Login({ initialMode = "login", sessionError = "", confir
       {signingUp && <label className="form-field">Confirm password<input type="password" autoComplete="new-password" minLength={6} required value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} placeholder="Enter your password again" /></label>}
       {displayedError && <p className="form-error" role="alert">{displayedError}</p>}
       {success && <p className="form-success" role="status">{success}</p>}
-      <button className="button button-primary auth-submit" disabled={busy}>{busy ? "Please wait…" : <>{resettingPassword ? "Send recovery email" : signingUp ? "Create account" : "Sign in"} <ArrowRight size={16} /></>}</button>
+      <button type="submit" className="button button-primary auth-submit" disabled={busy}>{busy ? "Please wait…" : <>{resettingPassword ? "Send recovery email" : signingUp ? "Create account" : "Sign in"} <ArrowRight size={16} /></>}</button>
       {resettingPassword
         ? <p className="auth-switch auth-switch-primary"><button type="button" onClick={() => { setResettingPassword(false); setError(""); setSuccess(""); }}>Back to sign in</button></p>
         : <p className="auth-switch auth-switch-primary">{signingUp ? "Already have an account?" : "New to NEXA?"} <Link to={signingUp ? "/login" : "/signup"}>{signingUp ? "Sign in" : "Create account"}</Link></p>}

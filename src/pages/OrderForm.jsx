@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Check, ChevronDown, LoaderCircle, Minus, Plus, Search, Trash2, X } from "lucide-react";
 import { api } from "../lib/api";
 import { money } from "../components";
+import { formatDate } from "../dates.js";
 
 const editableStatuses = ["Pending", "Processing", "Completed"];
 const lineAmount = (item) => Math.round(Number(item.unit_price) * 100) * Number(item.quantity) / 100;
@@ -95,9 +96,9 @@ export default function OrderForm({ products, customers, order = null, dataError
     }
   }
 
-  const dateLabel = order?.created_at
-    ? new Date(order.created_at).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })
-    : new Date().toLocaleDateString(undefined, { dateStyle: "medium" });
+  const dateLabel = formatDate(order?.created_at || new Date(), order
+    ? { dateStyle: "medium", timeStyle: "short" }
+    : { dateStyle: "medium" });
 
   return <div className="modal-backdrop order-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
     <form className="modal-card order-modal" onSubmit={submit}>

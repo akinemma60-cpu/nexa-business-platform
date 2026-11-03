@@ -1,11 +1,22 @@
 import { supabase } from "./supabase";
 
 function client() {
-  if (!supabase) throw new Error("Supabase is not configured. Add the VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY environment variables.");
+  if (!supabase) throw new Error("Supabase is not configured. Set VITE_SUPABASE_URL and either VITE_SUPABASE_PUBLISHABLE_KEY or VITE_SUPABASE_ANON_KEY.");
   return supabase;
 }
 async function result(request) {
   const { data, error } = await request;
+  if (error) throw error;
+  return data;
+}
+async function updateOrderStatus(id, status) {
+  const { data, error } = await client().rpc("set_order_status", {
+    p_order_id: id,
+    p_status: status,
+  });
+  if (error?.code === "PGRST202") {
+    throw new Error("Order status changes need the latest Supabase database migration. Ask your project administrator to apply it.");
+  }
   if (error) throw error;
   return data;
 }
@@ -34,7 +45,7 @@ export const api = {
       customer_id: values.customer_id || null,
       status: values.status,
     }).eq("id", id).select().single()),
-    updateStatus: (id, status) => result(client().from("orders").update({ status }).eq("id", id).select().single()),
+    updateStatus: updateOrderStatus,
     remove: (id) => result(client().from("orders").delete().eq("id", id)),
   },
 };

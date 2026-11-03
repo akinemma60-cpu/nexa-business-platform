@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 
-function preferredCurrency() {
+export function getPreferredCurrency() {
   try {
     const candidate = String(JSON.parse(localStorage.getItem("nexa-settings") || "{}").currency || "NGN").slice(0, 3).toUpperCase();
     return ["NGN", "USD", "GBP"].includes(candidate) ? candidate : "NGN";
@@ -9,7 +9,7 @@ function preferredCurrency() {
   catch { return "NGN"; }
 }
 export const money = (amount) => {
-  const currency = preferredCurrency();
+  const currency = getPreferredCurrency();
   const locale = currency === "NGN" ? "en-NG" : currency === "GBP" ? "en-GB" : "en-US";
   return new Intl.NumberFormat(locale, { style: "currency", currency, maximumFractionDigits: currency === "NGN" ? 0 : 2 }).format(Number(amount || 0));
 };

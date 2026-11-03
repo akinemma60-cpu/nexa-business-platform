@@ -75,6 +75,7 @@ export function AuthProvider({ children }) {
         return;
       }
       if (signupAttemptInProgress.current && event === "SIGNED_IN") {
+        setSession(nextSession);
         setLoading(false);
         return;
       }
